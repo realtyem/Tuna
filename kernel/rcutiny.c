@@ -89,12 +89,12 @@ void rcu_idle_enter(void)
 
 	local_irq_save(flags);
 	oldval = rcu_dynticks_nesting;
-	WARN_ON_ONCE((rcu_dynticks_nesting & DYNTICK_TASK_NESTING_MASK) == 0);
-	if ((rcu_dynticks_nesting & DYNTICK_TASK_NESTING_MASK) ==
-	    DYNTICK_TASK_NESTING_VALUE)
+	WARN_ON_ONCE((rcu_dynticks_nesting & DYNTICK_TASK_NEST_MASK) == 0);
+	if ((rcu_dynticks_nesting & DYNTICK_TASK_NEST_MASK) ==
+	    DYNTICK_TASK_NEST_VALUE)
 		rcu_dynticks_nesting = 0;
 	else
-		rcu_dynticks_nesting  -= DYNTICK_TASK_NESTING_VALUE;
+		rcu_dynticks_nesting  -= DYNTICK_TASK_NEST_VALUE;
 	rcu_idle_enter_common(oldval);
 	local_irq_restore(flags);
 }
@@ -148,8 +148,8 @@ void rcu_idle_exit(void)
 	local_irq_save(flags);
 	oldval = rcu_dynticks_nesting;
 	WARN_ON_ONCE(rcu_dynticks_nesting < 0);
-	if (rcu_dynticks_nesting & DYNTICK_TASK_NESTING_MASK)
-		rcu_dynticks_nesting += DYNTICK_TASK_NESTING_VALUE;
+	if (rcu_dynticks_nesting & DYNTICK_TASK_NEST_MASK)
+		rcu_dynticks_nesting += DYNTICK_TASK_NEST_VALUE;
 	else
 		rcu_dynticks_nesting = DYNTICK_TASK_EXIT_IDLE;
 	rcu_idle_exit_common(oldval);

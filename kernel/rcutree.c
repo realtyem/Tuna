@@ -397,11 +397,11 @@ void rcu_idle_enter(void)
 	local_irq_save(flags);
 	rdtp = &__get_cpu_var(rcu_dynticks);
 	oldval = rdtp->dynticks_nesting;
-	WARN_ON_ONCE((oldval & DYNTICK_TASK_NESTING_MASK) == 0);
-	if ((oldval & DYNTICK_TASK_NESTING_MASK) == DYNTICK_TASK_NESTING_VALUE)
+	WARN_ON_ONCE((oldval & DYNTICK_TASK_NEST_MASK) == 0);
+	if ((oldval & DYNTICK_TASK_NEST_MASK) == DYNTICK_TASK_NEST_VALUE)
 		rdtp->dynticks_nesting = 0;
 	else
-		rdtp->dynticks_nesting -= DYNTICK_TASK_NESTING_VALUE;
+		rdtp->dynticks_nesting -= DYNTICK_TASK_NEST_VALUE;
 	rcu_idle_enter_common(rdtp, oldval);
 	local_irq_restore(flags);
 }
@@ -475,7 +475,7 @@ static void rcu_idle_exit_common(struct rcu_dynticks *rdtp, long long oldval)
  * Exit idle mode, in other words, -enter- the mode in which RCU
  * read-side critical sections can occur.
  *
- * We crowbar the ->dynticks_nesting field to DYNTICK_TASK_NESTING to
+ * We crowbar the ->dynticks_nesting field to DYNTICK_TASK_NEST to
  * allow for the possibility of usermode upcalls messing up our count
  * of interrupt nesting level during the busy period that is just
  * now starting.
@@ -490,8 +490,8 @@ void rcu_idle_exit(void)
 	rdtp = &__get_cpu_var(rcu_dynticks);
 	oldval = rdtp->dynticks_nesting;
 	WARN_ON_ONCE(oldval < 0);
-	if (oldval & DYNTICK_TASK_NESTING_MASK)
-		rdtp->dynticks_nesting += DYNTICK_TASK_NESTING_VALUE;
+	if (oldval & DYNTICK_TASK_NEST_MASK)
+		rdtp->dynticks_nesting += DYNTICK_TASK_NEST_VALUE;
 	else
 		rdtp->dynticks_nesting = DYNTICK_TASK_EXIT_IDLE;
 	rcu_idle_exit_common(rdtp, oldval);
