@@ -64,10 +64,7 @@ struct cgroup_subsys blkio_subsys = {
 	.attach_task = blkiocg_attach_task,
 	.destroy = blkiocg_destroy,
 	.populate = blkiocg_populate,
-#ifdef CONFIG_BLK_CGROUP
-	/* note: blkio_subsys_id is otherwise defined in blk-cgroup.h */
 	.subsys_id = blkio_subsys_id,
-#endif
 	.use_id = 1,
 	.module = THIS_MODULE,
 };
@@ -1689,29 +1686,3 @@ void blkio_policy_unregister(struct blkio_policy_type *blkiop)
 	spin_unlock(&blkio_list_lock);
 }
 EXPORT_SYMBOL_GPL(blkio_policy_unregister);
-
-static int __init init_cgroup_blkio(void)
-{
-	int ret;
-
-	blkg_stats_cpu_pool = percpu_mempool_create(BLKG_STATS_CPU_POOL_SIZE,
-				sizeof(struct blkio_group_stats_cpu),
-				__alignof__(struct blkio_group_stats_cpu));
-	if (!blkg_stats_cpu_pool)
-		return -ENOMEM;
-
-	ret = cgroup_load_subsys(&blkio_subsys);
-	if (ret)
-		percpu_mempool_destroy(blkg_stats_cpu_pool);
-	return ret;
-}
-
-static void __exit exit_cgroup_blkio(void)
-{
-	cgroup_unload_subsys(&blkio_subsys);
-	percpu_mempool_destroy(blkg_stats_cpu_pool);
-}
-
-module_init(init_cgroup_blkio);
-module_exit(exit_cgroup_blkio);
-MODULE_LICENSE("GPL");
