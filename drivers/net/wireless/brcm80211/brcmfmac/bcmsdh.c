@@ -45,11 +45,7 @@ static void brcmf_sdioh_irqhandler(struct sdio_func *func)
 
 	brcmf_dbg(TRACE, "***IRQHandler\n");
 
-	sdio_release_host(func);
-
 	brcmf_sdbrcm_isr(sdiodev->bus);
-
-	sdio_claim_host(func);
 }
 
 int brcmf_sdcard_intr_reg(struct brcmf_sdio_dev *sdiodev)
