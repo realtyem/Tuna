@@ -276,8 +276,90 @@ void __init plat_mem_setup(void)
 			memcpy(&mcore->serial_ports[1], &port, sizeof(port));
 		}
 	}
+}
+#endif
+
+#ifdef CONFIG_BCM47XX_BCMA
+static int bcm47xx_get_sprom_bcma(struct bcma_bus *bus, struct ssb_sprom *out)
+{
+	char prefix[10];
+	struct bcma_device *core;
+
+	switch (bus->hosttype) {
+	case BCMA_HOSTTYPE_PCI:
+		snprintf(prefix, sizeof(prefix), "pci/%u/%u/",
+			 bus->host_pci->bus->number + 1,
+			 PCI_SLOT(bus->host_pci->devfn));
+		bcm47xx_fill_sprom(out, prefix);
+		return 0;
+	case BCMA_HOSTTYPE_SOC:
+		bcm47xx_fill_sprom_ethernet(out, NULL);
+		core = bcma_find_core(bus, BCMA_CORE_80211);
+		if (core) {
+			snprintf(prefix, sizeof(prefix), "sb/%u/",
+				 core->core_index);
+			bcm47xx_fill_sprom(out, prefix);
+		}
+		return 0;
+	default:
+		pr_warn("bcm47xx: unable to fill SPROM for given bustype.\n");
+		return -EINVAL;
+	}
+}
+
+static void __init bcm47xx_register_bcma(void)
+{
+	int err;
+
+	err = bcma_arch_register_fallback_sprom(&bcm47xx_get_sprom_bcma);
+	if (err)
+		pr_warn("bcm47xx: someone else already registered a bcma SPROM callback handler (err %d)\n", err);
+
+	err = bcma_host_soc_register(&bcm47xx_bus.bcma);
+	if (err)
+		panic("Failed to initialize BCMA bus (err %d)", err);
+
+	bcm47xx_fill_bcma_boardinfo(&bcm47xx_bus.bcma.bus.boardinfo, NULL);
+}
+#endif
+
+void __init plat_mem_setup(void)
+{
+	struct cpuinfo_mips *c = &current_cpu_data;
+
+	if (c->cputype == CPU_74K) {
+		printk(KERN_INFO "bcm47xx: using bcma bus\n");
+#ifdef CONFIG_BCM47XX_BCMA
+		bcm47xx_bus_type = BCM47XX_BUS_TYPE_BCMA;
+		bcm47xx_register_bcma();
+#endif
+	} else {
+		printk(KERN_INFO "bcm47xx: using ssb bus\n");
+#ifdef CONFIG_BCM47XX_SSB
+		bcm47xx_bus_type = BCM47XX_BUS_TYPE_SSB;
+		bcm47xx_register_ssb();
+#endif
+	}
 
 	_machine_restart = bcm47xx_machine_restart;
 	_machine_halt = bcm47xx_machine_halt;
 	pm_power_off = bcm47xx_machine_halt;
 }
+
+static int __init bcm47xx_register_bus_complete(void)
+{
+	switch (bcm47xx_bus_type) {
+#ifdef CONFIG_BCM47XX_SSB
+	case BCM47XX_BUS_TYPE_SSB:
+		/* Nothing to do */
+		break;
+#endif
+#ifdef CONFIG_BCM47XX_BCMA
+	case BCM47XX_BUS_TYPE_BCMA:
+		bcma_bus_register(&bcm47xx_bus.bcma.bus);
+		break;
+#endif
+	}
+	return 0;
+}
+device_initcall(bcm47xx_register_bus_complete);
