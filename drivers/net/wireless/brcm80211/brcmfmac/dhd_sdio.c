@@ -309,8 +309,16 @@ struct rte_console {
 /* Flags for SDH calls */
 #define F2SYNC	(SDIO_REQ_4BYTE | SDIO_REQ_FIXED)
 
+#ifdef BRCMFMAC_FW_PATH
+#define BRCMF_SDIO_FW_NAME	BRCMFMAC_FW_PATH
+#else
 #define BRCMF_SDIO_FW_NAME	"brcm/brcmfmac-sdio.bin"
+#endif /* BRCMFMAC_FW_PATH */
+#ifdef BRCMFMAC_NVRAM_PATH
+#define BRCMF_SDIO_NV_NAME	BRCMFMAC_NVRAM_PATH
+#else
 #define BRCMF_SDIO_NV_NAME	"brcm/brcmfmac-sdio.txt"
+#endif /* BRCMFMAC_NVRAM_PATH */
 MODULE_FIRMWARE(BRCMF_SDIO_FW_NAME);
 MODULE_FIRMWARE(BRCMF_SDIO_NV_NAME);
 

@@ -36,6 +36,20 @@ config BRCMFMAC_SDIO
 	  IEEE802.11n embedded FullMAC WLAN driver. Say Y if you want to
 	  use the driver for a SDIO wireless card.
 
+config BRCMFMAC_FW_PATH
+	depends on BRCMFMAC
+	string "Firmware custom path"
+	default "/system/etc/firmware/fw_bcmdhd.bin"
+	---help---
+	  Path to the firmware file.
+
+config BRCMFMAC_NVRAM_PATH
+	depends on BRCMFMAC
+	string "NVRAM custom path"
+	default "/system/etc/wifi/bcmdhd.cal"
+	---help---
+	  Path to the calibration file.
+
 config BRCMFMAC_SDIO_OOB
 	bool "Out of band interrupt support for SDIO interface chipset"
 	depends on BRCMFMAC_SDIO
