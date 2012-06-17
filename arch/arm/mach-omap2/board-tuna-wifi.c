@@ -31,6 +31,7 @@
 #include <linux/random.h>
 #include <linux/jiffies.h>
 
+#include <mach/id.h>
 #include "hsmmc.h"
 #include "control.h"
 #include "mux.h"
@@ -193,8 +194,7 @@ static struct regulator_init_data tuna_vmmc5 = {
 
 static struct fixed_voltage_config tuna_vwlan = {
 	.supply_name = "vwl1271",
-	//.microvolts = 2000000, /* 2.0V */
-	.microvolts = 1800000, /* 1.8V (10% reduction) */
+	.microvolts = 2000000, /* 2.0V */
 	.gpio = GPIO_WLAN_PMENA,
 	.startup_delay = 70000, /* 70msec */
 	.enable_high = 1,
@@ -289,6 +289,7 @@ static int tuna_wifi_get_mac_addr(unsigned char *buf)
 {
 	int type = omap4_tuna_get_type();
 	uint rand_mac;
+	struct omap_die_id oid;
 
 	if (type != TUNA_TYPE_TORO)
 		return -EINVAL;
@@ -297,8 +298,8 @@ static int tuna_wifi_get_mac_addr(unsigned char *buf)
 		return -EFAULT;
 
 	if ((tuna_mac_addr[4] == 0) && (tuna_mac_addr[5] == 0)) {
-		srandom32((uint)jiffies);
-		rand_mac = random32();
+		omap_get_die_id(&oid);
+		rand_mac = (uint)oid.id_3; // id_3 or id_1 ?
 		tuna_mac_addr[3] = (unsigned char)rand_mac;
 		tuna_mac_addr[4] = (unsigned char)(rand_mac >> 8);
 		tuna_mac_addr[5] = (unsigned char)(rand_mac >> 16);
